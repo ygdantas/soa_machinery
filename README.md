@@ -1,4 +1,4 @@
-# SOA Machinery (D2.1.1)
+# SOA Machinery
 
 The SOA machinery is an engine for automating the enumeration of security artifacts from safety artifacts
 - assets
