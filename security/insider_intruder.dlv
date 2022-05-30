@@ -1,0 +1,110 @@
+#show insider_intruder/3.
+
+%%% considered loss scenarios
+loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","planning_ID_110201","control_ID_109733","_apollo__planning","FAILURE_ERRONEOUS","hz_113865").
+loss_scenario_af3("ls_113869_FAILURE_LOSS","planning_ID_110201","control_ID_109733","_apollo__planning","FAILURE_LOSS","hz_113865").
+
+loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","localization_ID_109801","perception_ID_110035","_apollo__localization__pose","FAILURE_ERRONEOUS","hz_113865").
+loss_scenario_af3("ls_113869_FAILURE_LOSS","localization_ID_109801","perception_ID_110035","_apollo__localization__pose","FAILURE_LOSS","hz_113865").
+
+loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","control_ID_109733","chassis_ID_110485","_apollo__control","FAILURE_ERRONEOUS","hz_113865").
+loss_scenario_af3("ls_113869_FAILURE_LOSS","control_ID_109733","chassis_ID_110485","_apollo__control","FAILURE_LOSS","hz_113865").
+
+%% -------------------------------------------------------------------------- %%
+%%			  insider intruder reachability rules and attack rules
+%% -------------------------------------------------------------------------- %%
+attack_path_mitm(ASSET,SOURCE,TARGET) :- asset_topic(ASSET), 
+										threat_scenario(ASSET,ATTACK_TYPE), 
+										path_MITM_topic_SOA(ASSET,SOURCE,TOPIC,TARGET).
+
+
+
+attack_path_dos(ASSET,[PUB,ASSET]) :- asset(ASSET), 
+									  threat_scenario(ASSET,ATTACK_TYPE),
+									  get_attack_type(ASSET,dos),
+									  subscriber(ASSET,TOPIC),
+									  publisher(PUB,TOPIC).
+
+
+insider_intruder(MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC).
+
+
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,SUB_TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+																	      damage_scenario(ASSET,integrity,_),
+																	      publisher(TARGET_CP,ASSET),
+																	      has_child_component_pub(TARGET_CP,ASSET),
+																	      get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+																		  subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+																		  publisher(MALICIOUS_CP,TARGET_TOPIC),
+																		  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+																		  get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,SUB_TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+																	  damage_scenario(ASSET,integrity,_),
+																	  publisher(TARGET_CP,ASSET),
+																	  has_child_component_pub(TARGET_CP,ASSET),
+																	  get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+																	  subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+																	  publisher(MALICIOUS_CP,TARGET_TOPIC),
+																	  not has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC).
+
+
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+																	      damage_scenario(ASSET,integrity,_),
+																	      publisher(TARGET_CP,ASSET),
+																	      has_child_component_pub(TARGET_CP,ASSET),
+																	      get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+																		  %not subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+																		  not is_subscriber(SUB_TARGET_CP),
+																		  subscriber(TARGET_CP,TARGET_TOPIC),
+																		  publisher(MALICIOUS_CP,TARGET_TOPIC),
+																		  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+																		  get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+																	  damage_scenario(ASSET,integrity,_),
+																	  publisher(TARGET_CP,ASSET),
+																	  has_child_component_pub(TARGET_CP,ASSET),
+																	  get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+																	  %not subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+																	  not is_subscriber(SUB_TARGET_CP),
+																	  subscriber(TARGET_CP,TARGET_TOPIC),
+																	  publisher(MALICIOUS_CP,TARGET_TOPIC),
+																	  not has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC).
+
+
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+																      damage_scenario(ASSET,integrity,_),
+																      publisher(TARGET_CP,ASSET),
+																      not has_child_component_pub(TARGET_CP,ASSET),
+																	  subscriber(TARGET_CP,TARGET_TOPIC),
+																	  publisher(MALICIOUS_CP,TARGET_TOPIC),
+																	  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+																	  get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+															      damage_scenario(ASSET,integrity,_),
+															      publisher(TARGET_CP,ASSET),
+															      not has_child_component_pub(TARGET_CP,ASSET),
+																  subscriber(TARGET_CP,TARGET_TOPIC),
+																  publisher(MALICIOUS_CP,TARGET_TOPIC),
+																  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+																  not has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC).
+
+
+% case - get (indirect) publisher NEW_MALICIOUS that can affect the behavior of the previous publisher LAST_FIRST
+path_MITM_topic_SOA(ASSET,NEW_MALICIOUS,LAST_MALICIOUS,TARGET_TOPIC) :-  path_MITM_topic_SOA(ASSET,LAST_MALICIOUS,LAST_CP,LAST_TOPIC),
+																	     publisher(LAST_MALICIOUS,LAST_TOPIC),
+																	     subscriber(LAST_MALICIOUS,TARGET_TOPIC),
+																	     publisher(NEW_MALICIOUS,TARGET_TOPIC),
+																	     not has_child_component_pub(NEW_MALICIOUS,TARGET_TOPIC).
+
+path_MITM_topic_SOA(ASSET,SUB_NEW_MALICIOUS,LAST_MALICIOUS,TARGET_TOPIC) :-  path_MITM_topic_SOA(ASSET,LAST_MALICIOUS,LAST_CP,LAST_TOPIC),
+																		     publisher(LAST_MALICIOUS,LAST_TOPIC),
+																		     subscriber(LAST_MALICIOUS,TARGET_TOPIC),
+																		     publisher(NEW_MALICIOUS,TARGET_TOPIC),
+																		     has_child_component_pub(NEW_MALICIOUS,TARGET_TOPIC),
+																		     get_child_publisher_topic(NEW_MALICIOUS,TARGET_TOPIC,SUB_NEW_MALICIOUS).
+
+

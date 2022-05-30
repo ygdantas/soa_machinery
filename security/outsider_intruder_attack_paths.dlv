@@ -1,0 +1,42 @@
+#show outsider_intruder/1.
+%% -------------------------------------------------------------------------- %%
+%%			 			outsider intruder attacker rules
+%% -------------------------------------------------------------------------- %%
+path(ASSET,[Y],[ECU]) :- reachable(X,Y),
+			             attack_reachable(A,ASSET,ECU),
+			             ecu_port(ECU,Y).
+
+path(ASSET,PATH_PORT,PATH_HW) :- path(ASSET,PATHPORT0,PATHHW0),
+								&head(PATHPORT0;X),
+								hardware_port(HW,X),
+								not public(HW),					
+								reachable(_,Y),
+								transmission_with_ports(ID,Y,ELEM1,X,NET2),
+								not &member(Y,PATHPORT0;),
+								not &member(ELEM1,PATHHW0;),
+			%					not visited(ELEM1,PATH_ORIGINAL),
+								&insNth(PATHPORT0,Y,1;PATH_PORT),
+								&insNth(PATHHW0,ELEM1,1;PATH_HW).				
+
+path(ASSET,PATH_PORT,PATH_HW)  :- path(ASSET,PATHPORT0,PATHHW0),
+								&head(PATHPORT0;X),
+								hardware_port(HW,X),
+								not public(HW),
+								hardware_port(HW,OTHER_PORT),
+								transmission_with_ports(ID,Y,ELEM1,OTHER_PORT,HW),
+								reachable(_,Y),					
+								not &member(Y,PATHPORT0;),
+								not &member(ELEM1,PATHHW0;),
+								&insNth(PATHPORT0,Y,1;PATH_PORT),
+								&insNth(PATHHW0,ELEM1,1;PATH_HW).		
+
+outsider_intruder(PATH_PORT) :- path(ASSET,PATH_PORT,PATH_HW),
+							    &head(PATH_PORT;PUBLIC),
+							    public(PUBLIC_INTERFACE),
+							    hardware_port(PUBLIC_INTERFACE,PUBLIC).									
+
+reachable(CP,X) :- transmission_with_ports(ID,Y,ELEM1,X,ELEM2),
+				   reachable(CP,Y).
+
+reachable(CP,Y) :- transmission_with_ports(ID,Y,ELEM1,X,ELEM2),
+				   reachable(CP,X).	

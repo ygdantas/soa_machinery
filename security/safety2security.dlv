@@ -1,0 +1,431 @@
+%% -------------------------------------------------------------------------- %%
+%%					debugging: #show PREDICATE/NUMBER_OF_PARAMTERS
+%% -------------------------------------------------------------------------- %%
+%% #show asset_to_af3/1.
+%% #show damage_scenario_to_af3/3.
+%% #show impact_rating_to_af3/2.
+%% #show threat_scenario_to_af3/2.
+%#show attack_path_to_af3/3.
+%#show path/2.
+%#show test/5.
+%#show allocation/2.
+%#show path/2.
+%% #show ecu_reads_from_network/2.
+%#show transmission_with_ports/5.
+%#show transmission/3.
+%#show ecu/1.
+%#show network/1.
+%% #show public/1.
+%#show channel/3.
+%#show component_input_port/3.
+%#show component_output_port/3.
+%#show test/1.
+%public("VIU_4_ID_13148").
+%#show channel_with_ports/5.
+%% asset_to_af3(X) specifies that component X is an asset
+%#show path_MITM_SOA/2.
+%#show attack_path_to_af3/3.
+%#show attack_path/2.
+%#show attack_path_mitm_to_af3/2.
+%#show get_MITM_SOA/3.
+%%%%%% Attack model for man-in-the-middle attacks
+%#show path_MITM_SOA/3.
+%#show attack_path_dos_to_af3/2. 
+%#show path_MITM_Topic_SOA/4.
+%#show attack_path_mitm/2.
+%#show component/1.
+%#show topic/1.
+%#show soa_channel/4.
+%#show attack_reachable/3.
+%#show path/2.
+%#show reachable/2.
+
+%% -------------------------------------------------------------------------- %%
+%%					 mapping of failure mode to security property
+%% -------------------------------------------------------------------------- %%
+%% failure_mode2security_property(FL,SP) specifies a mapping from failure mode to security property SP
+failure_mode2security_property(erroneous,integrity).
+failure_mode2security_property(loss,availability).
+
+%% -------------------------------------------------------------------------- %%
+%%		     mapping of safety impact rating to security impact rating
+%% -------------------------------------------------------------------------- %%
+%% impact_safety2security(S,C,I) specifies a mapping from the severity S and controllability C of a hazard to security impact I
+safety_impact2security_impact(s0,c0,negligible).
+safety_impact2security_impact(s0,c1,negligible).
+safety_impact2security_impact(s0,c2,negligible).
+safety_impact2security_impact(s0,c3,negligible).
+safety_impact2security_impact(s1,c0,negligible).
+safety_impact2security_impact(s1,c1,moderate).
+safety_impact2security_impact(s1,c2,moderate).
+safety_impact2security_impact(s1,c3,serious).
+safety_impact2security_impact(s2,c0,negligible).
+safety_impact2security_impact(s2,c1,moderate).
+safety_impact2security_impact(s2,c2,serious).
+safety_impact2security_impact(s2,c3,serious).
+safety_impact2security_impact(s3,c0,negligible).
+safety_impact2security_impact(s3,c1,serious).
+safety_impact2security_impact(s3,c2,serious).
+safety_impact2security_impact(s3,c3,severe).
+
+
+
+%% -------------------------------------------------------------------------- %%
+%%					 mapping of security property to attack type
+%% -------------------------------------------------------------------------- %%
+asset_type_security_property2attack_type(software,integrity,elevation_of_privilege).
+asset_type_security_property2attack_type(software,integrity,tampering).
+asset_type_security_property2attack_type(software,availability,tampering).
+asset_type_security_property2attack_type(software,availability,dos).
+
+asset_type_security_property2attack_type(topic,integrity,spoofing).
+asset_type_security_property2attack_type(topic,integrity,elevation_of_privilege).
+asset_type_security_property2attack_type(topic,availability,dos).
+
+
+asset_type_security_property2attack_type(topic,integrity,tampering).
+asset_type_security_property2attack_type(topic,availability,tampering).
+asset_type_security_property2attack_type(topic,availability,dos).
+
+%% security_property2type_attack(SP,AT) specifies a mapping from security property SP to type of attack AT
+security_property2type_attack(integrity,spoofing).
+security_property2type_attack(integrity,tampering).
+security_property2type_attack(availability,dos).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Mapping from safety elements to security elements %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% -------------------------------------------------------------------------- %%
+%%					 deriving assets from loss scenarios
+%% -------------------------------------------------------------------------- %%
+% software/functions
+asset_software(FROM) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					    component(FROM).
+% software/functions
+asset_software(TO) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					  component(TO).
+% signal/topic
+asset_topic(TOPIC) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					  topic(TOPIC).
+
+% hardware
+asset_hardware(ECU) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					   component(FROM),
+					   allocation(FROM,ECU),
+					   ecu(ECU).
+
+% hardware
+asset_hardware(ECU) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					   component(TO),
+					   allocation(TO,ECU),
+					   ecu(ECU).
+
+%% -------------------------------------------------------------------------- %%
+%%					 simplified version of assets
+%% -------------------------------------------------------------------------- %%
+asset(ASSET) :- asset_software(ASSET).
+asset(ASSET) :- asset_topic(ASSET).
+asset(ASSET) :- asset_hardware(ASSET).
+
+
+%% -------------------------------------------------------------------------- %%
+%%			 deriving damage scenarios from loss scenarios/failure mode
+%% -------------------------------------------------------------------------- %%
+%% damage_scenario_to_af3(X,SECURITY_PROPERTY, HAZARD) specifies the consequences (i.e., HAZARD) of a violation of SECURITY_PROPERTY of ASSET X
+damage_scenario(ASSET,SECURITY_PROPERTY,HAZARD) :- asset_software(ASSET),
+									               loss_scenario_verbose(ID_LS,ASSET,TO,TOPIC,FAILURE_MODE,HAZARD),
+									               failure_mode2security_property(FAILURE_MODE,SECURITY_PROPERTY).	
+
+damage_scenario(ASSET,SECURITY_PROPERTY,HAZARD) :- asset_software(ASSET),
+									               loss_scenario_verbose(ID_LS,FROM,ASSET,TOPIC,FAILURE_MODE,HAZARD),
+									               failure_mode2security_property(FAILURE_MODE,SECURITY_PROPERTY).	
+
+damage_scenario(ASSET,SECURITY_PROPERTY,HAZARD) :- asset_topic(ASSET),
+									               loss_scenario_verbose(ID_LS,FROM,TO,ASSET,FAILURE_MODE,HAZARD),
+									               failure_mode2security_property(FAILURE_MODE,SECURITY_PROPERTY).	
+
+
+%% -------------------------------------------------------------------------- %%
+%%			 deriving security impact rating from damage scenarios
+%% -------------------------------------------------------------------------- %%
+%% impact_rating_to_af3(X,SI) specifies the security impact rating SI of asset X (in case the damage scenario associated with X happens)
+impact_rating(ASSET,SECURITY_IMPACT) :- damage_scenario(ASSET,_,HAZARD),
+										hazard(HAZARD,SEVERITY,_,CONTROLLABILITY),
+										safety_impact2security_impact(SEVERITY,CONTROLLABILITY,SECURITY_IMPACT).
+
+%% -------------------------------------------------------------------------- %%
+%%			 deriving threat scenarios from damage scenarios
+%% -------------------------------------------------------------------------- %%
+% threat_scenario(ASSET,ATTACK) specifies a threat scenario that realizes a damage scenario associated to ASSET through attack ATTACK -> {spoofing,tampering,dos}. 
+threat_scenario(ASSET,ATTACK_TYPE) :- damage_scenario(ASSET,SECURITY_PROPERTY,_),
+									  get_asset_type(ASSET,ASSET_TYPE),
+									  asset_type_security_property2attack_type(ASSET_TYPE,SECURITY_PROPERTY,ATTACK_TYPE).
+
+%% %% -------------------------------------------------------------------------- %%
+%% %%			 			outsider intruder reachability rules
+%% %% -------------------------------------------------------------------------- %%
+%% attack_reachable(ASSET,ASSET,HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+%% 										  allocation(ASSET,HW_ASSET),
+%% 										  ecu_port(HW_ASSET,ECU_PORT), 
+%% 										  ecu(HW_ASSET), 
+%% 										  reachable(X,ECU_PORT),
+%% 										  cp1_writes_to_cp2_in_ecu(CP1,ASSET,HW_ASSET),
+%% 										  cp_reads_from_ecu_port(CP1,ECU_PORT).
+
+
+%% attack_reachable(ASSET,ASSET,HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+%% 										  allocation(ASSET,HW_ASSET),
+%% 										  ecu_port(HW_ASSET,ECU_PORT), 
+%% 										  ecu(HW_ASSET), 
+%% 										  reachable(X,ECU_PORT),
+%% 										  cp_reads_from_ecu_port(ASSET,ECU_PORT).
+
+
+
+
+%% attack_reachable(ASSET,SUBCP, HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+%% 										   sub_component(SUBCP,ASSET),
+%% 											allocation(SUBCP,HW_ASSET), 
+%% 											ecu_port(HW_ASSET,ECU_PORT), 
+%% 											reachable(X,ECU_PORT),
+%% 										    cp1_writes_to_cp2_in_ecu(CP1,SUBCP,HW_ASSET),
+%% 										    cp_reads_from_ecu_port(CP1,ECU_PORT).
+
+
+%% attack_reachable(ASSET,ASSET,HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+%% 										  sub_component(SUBCP,ASSET),
+%% 										  allocation(SUBCP,HW_ASSET), 
+%% 										  ecu_port(HW_ASSET,ECU_PORT), 
+%% 										  ecu(HW_ASSET), 
+%% 										  reachable(X,ECU_PORT),
+%% 										  cp_reads_from_ecu_port(SUBCP,ECU_PORT).
+
+%% ecu_reads_from_network(ECU,NET) :- ecu(ECU),
+%% 								   network(NET),
+%% 								   transmission(ID,ECU,NET).
+
+%% % ECU writes to a network interface
+%% ecu_writes_to_network(ECU,NET) :- ecu(ECU),
+%% 							      network(NET),
+%% 							      transmission(ID,ECU,NET).
+
+%% % Cluster writes to a network interfaces
+%% cluster_writes_to_network(CLUSTER,NET) :- cluster(CLUSTER),
+%% 					        			  network(NET),
+%% 					        			  transmission(ID,CLUSTER,NET).
+
+
+
+%% % Network interface writes to a cluster
+%% network_writes_to_cluster(NET,CLUSTER) :- cluster(CLUSTER),
+%% 							              network(NET),
+%% 							              transmission(ID,ECU,NET).
+
+%% % Network interface writes to another network interface
+%% ecu_writes_to_network(NET1,NET2) :- network(NET1),
+%% 						            network(NET2),
+%% 						            transmission(ID,NET1,NET2).					        
+
+
+%% % basic case - public ECU is accessible
+%% %% reachable(null,PUBLIC,[PUBLIC]) :- public(PUBLIC).
+
+%% reachable(null,PUBLIC_PORT) :- public(PUBLIC),
+%% 						  ecu_port(PUBLIC,PUBLIC_PORT).
+
+%% reachable(null,PUBLIC_PORT) :- public(PUBLIC),
+%% 						  network_port(PUBLIC,PUBLIC_PORT).										
+
+
+
+
+
+%% reachable(null,NET_PORT) :- ecu_port(ECU,ECU_PORT),
+%% 						   public(ECU),
+%% 						   network_port(NET,NET_PORT),
+%% 						   transmission_with_ports(ID,OUTPUT_TARGET,ECU,NET_PORT,NET).
+
+%% reachable(null,NET2_PORT) :- public(NET1),
+%% 							network_port(NET1,NET1_PORT),
+%% 							network_port(NET2,NET2_PORT),
+%% 							transmission_with_ports(ID,OUTPUT_NET1,NET1,NET2_PORT,NET2).
+
+%% cp_reads_from_ecu_port(CP,INPUT_ECU) :- task_input_port(TASK,INPUT_TASK),
+%% 									    allocation(INPUT_TASK,INPUT_ECU),
+%% 									    allocation(CP,TASK).
+
+%% cp_writes_to_ecu_port(CP,OUTPUT_ECU) :- task_output_port(TASK,INPUT_TASK),
+%% 									    allocation(INPUT_TASK,OUTPUT_ECU),
+%% 									    allocation(CP,TASK).									    
+
+%% cp1_writes_to_cp2_in_ecu(CP1,CP2,ECU) :- ecu(ECU),
+%% 												 task(TASK1),
+%% 												 allocation(TASK1,ECU),
+%% 												 component(CP1),
+%% 												 allocation(CP1,TASK1),
+%% 												 task(TASK2),
+%% 												 allocation(TASK2,ECU),
+%% 												 component(CP2),										 
+%% 												 allocation(CP2,TASK2),
+%% 												 signal(ID,TASK1,TASK2).
+
+%% cp1_writes_to_cp2_in_ecu(CP1,CP2,ECU) :- component(CP3),
+%% 											   component(CP1),
+%% 											   component(CP2),
+%% 												 CP1 != CP2,
+%% 												 CP2 != CP3,
+%% 												 CP1 != CP3,
+%% 											     cp1_writes_to_cp2_in_ecu(CP1,CP3,ECU),
+%% 											     cp1_writes_to_cp2_in_ecu(CP3,CP2,ECU).
+
+ 
+
+
+%% is_reachable_within_ecu(INPUT_ECU,OUTPUT_ECU,ECU) :- component(CP1),
+%% 													 component(CP2),
+%% 													 cp1_writes_to_cp2_in_ecu(CP1,CP2,ECU),
+%% 											         cp_reads_from_ecu_port(CP1,INPUT_ECU),
+%% 											         cp_writes_to_ecu_port(CP2,OUTPUT_ECU).
+
+%% % case - a network interface (TARGET) is the last accessible element in the path
+%% %% ECU is added to the path if
+%% %%% ECU reads from TARGET 
+%% %%% exists a component CP allocated to ECU, 
+%% %%% CP reads from the network, i.e., a port of CP is allocated to the input port of ECU
+%% reachable(CP1,INPUT_ECU) :- reachable(CP,TARGET_PORT),
+%% 					  	    network_port(TARGET,TARGET_PORT),
+%% 					        ecu_port(ECU,INPUT_ECU),
+%% 	 				        transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_ECU,ECU),
+%% 					  	    component(CP1),
+%% 					        cp_reads_from_ecu_port(CP1,INPUT_ECU).
+
+%% reachable(CP,INPUT_NET) :- reachable(CP,TARGET_PORT),
+%% 					      ecu_port(TARGET,TARGET_PORT),
+%% 					      network_port(NET,INPUT_NET),
+%% 					      transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_NET,NET),
+%% 					      cp_writes_to_ecu_port(CP,OUTPUT_TARGET).
+%% 					      %is_reachable_within_ecu(TARGET_PORT,OUTPUT_TARGET,TARGET),	
+
+%% % case - a network interface (TARGET) is the last accessible element in the path
+%% %% another network interface (NET) is added to the path if
+%% %%% TARGET writes to NET 
+%% reachable(CP,INPUT_NET) :- reachable(CP,TARGET_PORT),
+%% 					  network_port(TARGET,TARGET_PORT),
+%% 					  network_port(NET,INPUT_NET),
+%% 					  transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_NET,NET).
+
+%% % case - a network interface (TARGET) is the last accessible element in the path
+%% %% a cluster CLUSTER is added to the path if
+%% %%% TARGET writes to CLUSTER 
+%% reachable(CP,INPUT_CLUSTER) :- reachable(CP,TARGET_PORT),
+%% 						       network_port(TARGET,TARGET_PORT),
+%% 						       cluster_port(CLUSTER,INPUT_CLUSTER),
+%% 						       transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_CLUSTER,CLUSTER).
+						    
+
+%% % case - a cluster (TARGET) is the last accessible element in the path
+%% %% a network interface NET is added to the path if
+%% %%% TARGET writes to NET 
+%% reachable(CP,NET_INPUT) :- reachable(CP,TARGET_PORT),
+%% 					       cluster_port(TARGET,TARGET_PORT),
+%% 					       network_port(NET,NET_INPUT),
+%% 					       transmission_with_ports(ID,OUTPUT_TARGET,TARGET,NET_INPUT,NET).
+
+%% %% -------------------------------------------------------------------------- %%
+%% %%			  insider intruder reachability rules and attack rules
+%% %% -------------------------------------------------------------------------- %%
+%% attack_path_mitm(ASSET,SOURCE,TARGET) :- asset_topic(ASSET), 
+%% 										threat_scenario(ASSET,ATTACK_TYPE), 
+%% 										path_MITM_topic_SOA(ASSET,SOURCE,TOPIC,TARGET).
+
+
+
+%% attack_path_dos(ASSET,[PUB,ASSET]) :- asset(ASSET), 
+%% 									  threat_scenario(ASSET,ATTACK_TYPE),
+%% 									  get_attack_type(ASSET,dos),
+%% 									  subscriber(ASSET,TOPIC),
+%% 									  publisher(PUB,TOPIC).
+
+
+%% insider_intruder(MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC).
+
+
+%% path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,SUB_TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+%% 																	      damage_scenario(ASSET,integrity,_),
+%% 																	      publisher(TARGET_CP,ASSET),
+%% 																	      has_child_component_pub(TARGET_CP,ASSET),
+%% 																	      get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+%% 																		  subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+%% 																		  publisher(MALICIOUS_CP,TARGET_TOPIC),
+%% 																		  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+%% 																		  get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+%% path_MITM_topic_SOA(ASSET,MALICIOUS_CP,SUB_TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+%% 																	  damage_scenario(ASSET,integrity,_),
+%% 																	  publisher(TARGET_CP,ASSET),
+%% 																	  has_child_component_pub(TARGET_CP,ASSET),
+%% 																	  get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+%% 																	  subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+%% 																	  publisher(MALICIOUS_CP,TARGET_TOPIC),
+%% 																	  not has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC).
+
+
+%% path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+%% 																	      damage_scenario(ASSET,integrity,_),
+%% 																	      publisher(TARGET_CP,ASSET),
+%% 																	      has_child_component_pub(TARGET_CP,ASSET),
+%% 																	      get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+%% 																		  %not subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+%% 																		  not is_subscriber(SUB_TARGET_CP),
+%% 																		  subscriber(TARGET_CP,TARGET_TOPIC),
+%% 																		  publisher(MALICIOUS_CP,TARGET_TOPIC),
+%% 																		  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+%% 																		  get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+%% path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+%% 																	  damage_scenario(ASSET,integrity,_),
+%% 																	  publisher(TARGET_CP,ASSET),
+%% 																	  has_child_component_pub(TARGET_CP,ASSET),
+%% 																	  get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+%% 																	  %not subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+%% 																	  not is_subscriber(SUB_TARGET_CP),
+%% 																	  subscriber(TARGET_CP,TARGET_TOPIC),
+%% 																	  publisher(MALICIOUS_CP,TARGET_TOPIC),
+%% 																	  not has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC).
+
+
+%% path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+%% 																      damage_scenario(ASSET,integrity,_),
+%% 																      publisher(TARGET_CP,ASSET),
+%% 																      not has_child_component_pub(TARGET_CP,ASSET),
+%% 																	  subscriber(TARGET_CP,TARGET_TOPIC),
+%% 																	  publisher(MALICIOUS_CP,TARGET_TOPIC),
+%% 																	  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+%% 																	  get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+
+%% path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_topic(ASSET),
+%% 															      damage_scenario(ASSET,integrity,_),
+%% 															      publisher(TARGET_CP,ASSET),
+%% 															      not has_child_component_pub(TARGET_CP,ASSET),
+%% 																  subscriber(TARGET_CP,TARGET_TOPIC),
+%% 																  publisher(MALICIOUS_CP,TARGET_TOPIC),
+%% 																  has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC),
+%% 																  not has_child_component_pub(MALICIOUS_CP,TARGET_TOPIC).
+
+
+%% % case - get (indirect) publisher NEW_MALICIOUS that can affect the behavior of the previous publisher LAST_FIRST
+%% path_MITM_topic_SOA(ASSET,NEW_MALICIOUS,LAST_MALICIOUS,TARGET_TOPIC) :-  path_MITM_topic_SOA(ASSET,LAST_MALICIOUS,LAST_CP,LAST_TOPIC),
+%% 																	     publisher(LAST_MALICIOUS,LAST_TOPIC),
+%% 																	     subscriber(LAST_MALICIOUS,TARGET_TOPIC),
+%% 																	     publisher(NEW_MALICIOUS,TARGET_TOPIC),
+%% 																	     not has_child_component_pub(NEW_MALICIOUS,TARGET_TOPIC).
+
+%% path_MITM_topic_SOA(ASSET,SUB_NEW_MALICIOUS,LAST_MALICIOUS,TARGET_TOPIC) :-  path_MITM_topic_SOA(ASSET,LAST_MALICIOUS,LAST_CP,LAST_TOPIC),
+%% 																		     publisher(LAST_MALICIOUS,LAST_TOPIC),
+%% 																		     subscriber(LAST_MALICIOUS,TARGET_TOPIC),
+%% 																		     publisher(NEW_MALICIOUS,TARGET_TOPIC),
+%% 																		     has_child_component_pub(NEW_MALICIOUS,TARGET_TOPIC),
+%% 																		     get_child_publisher_topic(NEW_MALICIOUS,TARGET_TOPIC,SUB_NEW_MALICIOUS).
+
+
