@@ -1,14 +1,17 @@
 #show insider_intruder/3.
 
-%%% considered loss scenarios
-loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","planning_ID_110201","control_ID_109733","_apollo__planning","FAILURE_ERRONEOUS","hz_113865").
-loss_scenario_af3("ls_113869_FAILURE_LOSS","planning_ID_110201","control_ID_109733","_apollo__planning","FAILURE_LOSS","hz_113865").
+% Each attack path consists of three elements:
+%%- insider_intruder(PUBLISHER,SUBSCRIBER,AFFECT_TOPIC).
 
-loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","localization_ID_109801","perception_ID_110035","_apollo__localization__pose","FAILURE_ERRONEOUS","hz_113865").
-loss_scenario_af3("ls_113869_FAILURE_LOSS","localization_ID_109801","perception_ID_110035","_apollo__localization__pose","FAILURE_LOSS","hz_113865").
+% considered loss scenarios
+%%loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","planning_ID_110201","control_ID_109733","_apollo__planning","FAILURE_ERRONEOUS","hz_113865").
+%%loss_scenario_af3("ls_113869_FAILURE_LOSS","planning_ID_110201","control_ID_109733","_apollo__planning","FAILURE_LOSS","hz_113865").
 
-loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","control_ID_109733","chassis_ID_110485","_apollo__control","FAILURE_ERRONEOUS","hz_113865").
-loss_scenario_af3("ls_113869_FAILURE_LOSS","control_ID_109733","chassis_ID_110485","_apollo__control","FAILURE_LOSS","hz_113865").
+%%loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","localization_ID_109801","perception_ID_110035","_apollo__localization__pose","FAILURE_ERRONEOUS","hz_113865").
+%%loss_scenario_af3("ls_113869_FAILURE_LOSS","localization_ID_109801","perception_ID_110035","_apollo__localization__pose","FAILURE_LOSS","hz_113865").
+
+%%loss_scenario_af3("ls_113867_FAILURE_ERRONEOUS","control_ID_109733","chassis_ID_110485","_apollo__control","FAILURE_ERRONEOUS","hz_113865").
+%%loss_scenario_af3("ls_113869_FAILURE_LOSS","control_ID_109733","chassis_ID_110485","_apollo__control","FAILURE_LOSS","hz_113865").
 
 %% -------------------------------------------------------------------------- %%
 %%			  insider intruder reachability rules and attack rules

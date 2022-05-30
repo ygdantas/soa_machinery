@@ -1,6 +1,10 @@
 #show outsider_intruder/1.
+
+% Each attack path consists of a list of ports from hardware units (public interfaces, ECUs, network interfaces). The list shall be read from left to right.
+%%- outsider_intruder([source_port,....,target_port]).
+
 %% -------------------------------------------------------------------------- %%
-%%			 			outsider intruder attacker rules
+%% 			outsider intruder attacker rules
 %% -------------------------------------------------------------------------- %%
 path(ASSET,[Y],[ECU]) :- reachable(X,Y),
 			             attack_reachable(A,ASSET,ECU),
