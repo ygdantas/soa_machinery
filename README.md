@@ -30,7 +30,7 @@ The instruction listed in this file have been tested in a Linux operating system
 
 ## Instructions for running the machinery
 
-The commands to the SOA machinery can be found below. The results will be printed out on the console. If the execution time of the machinery is required append '--stats=verbosity' to each of the following commands.
+The commands for running the SOA machinery can be found below. The results will be printed out on the console. If the execution time of the machinery is required append '--stats=verbosity' to each of the following commands.
 
 ### Outsider intruder
 The following command runs the machinery to enumerate attack paths from the outside (outsider intruder) 
@@ -40,7 +40,7 @@ The following command runs the machinery to enumerate attack paths from the outs
 ```
 
 Each attack path consists of a list of ports from hardware units (public interfaces, ECUs, network interfaces). The list shall be read from left to right.
-outsider_intruder([source_port,....,target_port]).
+- outsider_intruder([source_port,....,target_port]).
 
 ### Insider intruder
 
@@ -50,7 +50,7 @@ The following command runs the machinery to enumerate attack paths from the insi
 ./bin/dlv-2.1.1-linux-x86.bin example/apollo.dlv utils/utils.dlv m2m/af3.dlv -n 1 security/safety2security.dlv security/insider_intruder.dlv
 ```
 Each attack path consists of three elements:
-insider_intruder(PUBLISHER,SUBSCRIBER,AFFECT_TOPIC).
+- insider_intruder(PUBLISHER,SUBSCRIBER,AFFECT_TOPIC).
 
 
 
