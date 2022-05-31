@@ -40,7 +40,10 @@ The following command runs the machinery to enumerate attack paths from the outs
 ```
 
 Each attack path consists of a list of ports from hardware units (public interfaces, ECUs, network interfaces). The list shall be read from left to right.
-- outsider_intruder([source_port,....,target_port]).
+- outsider_intruder([SOURCE_PORT,....,TARGET_PORT]).
+
+This command also prints the information regarding the source of the attack path (i.e., public interface) and the target of the intruder (i.e., the affected topic)
+- outsider_intruder_from_to(PUBLIC_INTERFACE,AFFECTED_TOPIC).
 
 ### Insider intruder
 
@@ -50,7 +53,7 @@ The following command runs the machinery to enumerate attack paths from the insi
 ./bin/dlv-2.1.1-linux-x86.bin example/apollo.dlv utils/utils.dlv m2m/af3.dlv -n 1 security/safety2security.dlv security/insider_intruder.dlv
 ```
 Each attack path consists of three elements:
-- insider_intruder(PUBLISHER,SUBSCRIBER,AFFECT_TOPIC).
+- insider_intruder(PUBLISHER,SUBSCRIBER,AFFECTED_TOPIC).
 
 
 

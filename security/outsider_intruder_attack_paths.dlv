@@ -1,10 +1,12 @@
 #show outsider_intruder/1.
+#show outsider_intruder_from_to/2.
 
 % Each attack path consists of a list of ports from hardware units (public interfaces, ECUs, network interfaces). The list shall be read from left to right.
-%%- outsider_intruder([source_port,....,target_port]).
+%%- outsider_intruder([SOURCE_PORT,....,TARGET_PORT]).
+%%- the outsider_intruder_from_to predicate shows the source of the attack path (i.e., public interface) and the target of the intruder (i.e., the affected topic)
 
 %% -------------------------------------------------------------------------- %%
-%% 			outsider intruder attacker rules
+%%			 			outsider intruder attacker rules
 %% -------------------------------------------------------------------------- %%
 path(ASSET,[Y],[ECU]) :- reachable(X,Y),
 			             attack_reachable(A,ASSET,ECU),
@@ -38,6 +40,20 @@ outsider_intruder(PATH_PORT) :- path(ASSET,PATH_PORT,PATH_HW),
 							    &head(PATH_PORT;PUBLIC),
 							    public(PUBLIC_INTERFACE),
 							    hardware_port(PUBLIC_INTERFACE,PUBLIC).									
+
+
+outsider_intruder_from_to(SOURCE,TOPIC) :- outsider_intruder(PATH_PORT),
+										   &head(PATH_PORT;PUBLIC_PORT),
+										   	public(SOURCE),
+											hardware_port(SOURCE,PUBLIC),
+											&last(PATH_PORT;TARGET_ECU_PORT),
+											ecu(ECU),
+											hardware_port(ECU,TARGET_ECU_PORT),
+											asset(ASSET),
+											allocation(ASSET,ECU),
+											attack_reachable(_,ASSET,ECU),
+											publisher(ASSET,TOPIC).
+
 
 reachable(CP,X) :- transmission_with_ports(ID,Y,ELEM1,X,ELEM2),
 				   reachable(CP,Y).
