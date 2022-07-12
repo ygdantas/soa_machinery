@@ -28,6 +28,10 @@ The instruction listed in this file have been tested in a Linux operating system
 - *paper_results/outsider_attack.dlv* contains the attack paths from the outside 
 - *paper_results/insider_attack.dlv* contains the attack paths from the inside
 
+You may download the DLV2 binaries at
+
+https://dlv.demacs.unical.it/
+
 ## Instructions for running the machinery
 
 The commands for running the SOA machinery can be found below. The results will be printed out on the console. If the execution time of the machinery is required append '--stats=verbosity' to each of the following commands.
